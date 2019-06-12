@@ -144,7 +144,7 @@ def evaluate_multiply_divide(tokens):
 
 
 def evaluate_parentheses(tokens):
-    """Solve multiplication & division and update the list of tokens"""
+    """Solve equations in parentheses and update the list of tokens"""
 
     tokens.insert(0, {'type': 'PLUS'})  # Insert a dummy '+' token
     index = 1
@@ -172,7 +172,7 @@ def evaluate_parentheses(tokens):
                 print('Invalid syntax')
                 exit(1)
         index += 1
-        
+
     return tokens
 
 
