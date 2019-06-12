@@ -33,17 +33,34 @@ def readMinus(line, index):
     token = {'type': 'MINUS'}
     return token, index + 1
 
+
 def readMulitply(line, index):
     """Create dictionary for the token"""
 
     token = {'type': 'MULTIPLY'}
     return token, index + 1
 
+
 def readDivide(line, index):
     """Create dictionary for the token"""
 
     token = {'type': 'DIVIDE'}
     return token, index + 1
+
+
+def read_open_paren(line, index):
+    """Create dictionary for the token"""
+
+    token = {'type': 'OPEN_PAREN'}
+    return token, index + 1
+
+
+def read_close_paren(line, index):
+    """Create dictionary for the token"""
+
+    token = {'type': 'CLOSE_PAREN'}
+    return token, index + 1
+
 
 def tokenize(line):
     """Determine if a string is number/+/-/×/÷ and make list of tokens"""
@@ -61,18 +78,25 @@ def tokenize(line):
             (token, index) = readMulitply(line, index)
         elif line[index] == '/':
             (token, index) = readDivide(line, index)
+        elif line[index] == '(':
+            (token, index) = read_open_paren(line, index)
+        elif line[index] == ')':
+            (token, index) = read_close_paren(line, index)
         else:
             print('Invalid character found: ' + line[index])
             exit(1)
         tokens.append(token)
+
     return tokens
 
 
 def evaluate_plus_minus(tokens):
     """Solve addition & subtraction and return the answer """
+
     answer = 0
-    tokens.insert(0, {'type': 'PLUS'}) # Insert a dummy '+' token
+    tokens.insert(0, {'type': 'PLUS'})  # Insert a dummy '+' token
     index = 1
+
     while index < len(tokens):
         if tokens[index]['type'] == 'NUMBER':
             if tokens[index - 1]['type'] == 'PLUS':
@@ -80,18 +104,17 @@ def evaluate_plus_minus(tokens):
             elif tokens[index - 1]['type'] == 'MINUS':
                 answer -= tokens[index]['number']
             else:
-                if tokens[index - 1]['type'] in ('DIVIDE', 'MULTIPLY'):
-                    index += 1
-                else:
-                    print('Invalid syntax')
-                    exit(1)
-
+                print('Invalid syntax')
+                exit(1)
         index += 1
+
     return answer
+
 
 def evaluate_multiply_divide(tokens):
     """Solve multiplication & division and update the list of tokens"""
-    tokens.insert(0, {'type': 'PLUS'}) # Insert a dummy '+' token
+
+    tokens.insert(0, {'type': 'PLUS'})  # Insert a dummy '+' token
     tokens.insert(0, {'type': 'PLUS'})  # Insert a dummy '+' token
     index = 2
     end = len(tokens)
@@ -110,52 +133,54 @@ def evaluate_multiply_divide(tokens):
                 tokens.pop(index - 1)
                 index -= 2
                 end -= 2
+            elif tokens[index - 1]['type'] in('PLUS', 'MINUS'):
+                index += 1
             else:
-                if tokens[index - 1]['type'] in('PLUS', 'MINUS'):
-                    index += 1
-                else:
-                    print('Invalid syntax')
-                    exit(1)
+                print('Invalid syntax')
+                exit(1)
         index += 1
+
+    return tokens
+
+
+def evaluate_parentheses(tokens):
+    """Solve multiplication & division and update the list of tokens"""
+
+    tokens.insert(0, {'type': 'PLUS'})  # Insert a dummy '+' token
+    index = 1
+    end = len(tokens)
+
+    while index < end:
+        if tokens[index]['type'] == 'NUMBER':
+            if tokens[index - 1]['type'] == 'OPEN_PAREN':
+                index_paren = index
+                tmp_tokens = []
+                while tokens[index_paren]['type'] != 'CLOSE_PAREN':
+                    tmp_tokens.append(tokens[index_paren])
+                    index_paren += 1
+                tmp_ans = evaluate_plus_minus(evaluate_multiply_divide(tmp_tokens))
+                tokens[index - 1]['number'] = tmp_ans
+                tokens[index - 1]['type'] = 'NUMBER'
+                while tokens[index]['type'] != 'CLOSE_PAREN':
+                    tokens.pop(index)
+                    end -= 1
+                tokens.pop(index)
+                end -= 1
+            elif tokens[index - 1]['type'] in('PLUS', 'MINUS', 'MULTIPLY', 'DIVIDE', 'NUMBER'):
+                index += 1
+            else:
+                print('Invalid syntax')
+                exit(1)
+        index += 1
+        
     return tokens
 
 
 def evaluate(tokens):
     """Evaluate the list of tokens and return an answer"""
-    answer = evaluate_plus_minus(evaluate_multiply_divide(tokens))
+
+    answer = evaluate_plus_minus(evaluate_multiply_divide(evaluate_parentheses(tokens)))
     return answer
-
-def test(line):
-    """Testing to see if this calculator program works"""
-    tokens = tokenize(line)
-    actualAnswer = evaluate(tokens)
-    expectedAnswer = eval(line)
-    if abs(actualAnswer - expectedAnswer) < 1e-8:
-        print("PASS! (%s = %f)" % (line, expectedAnswer))
-    else:
-        print("FAIL! (%s should be %f but was %f)" % (line, expectedAnswer, actualAnswer))
-
-
-# Add more tests to this function :)
-def runTest():
-    """Specific equations for test"""
-    print("==== Test started! ====")
-    test("1")
-    test("1+2")
-    test("1.0+2")
-    test("1.0+2.1-3")
-    test("3*3")
-    test("3*3.0")
-    test("2+3*3.0")
-    test("2-3*3.0+2")
-    test("3/3")
-    test("2+3/3")
-    test("2+4*6/2.0-3.0")
-    test("2+4*6/2.0-6.0/3*2")
-    print("==== Test finished! ====\n")
-
-
-runTest()
 
 
 while True:
