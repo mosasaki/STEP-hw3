@@ -103,7 +103,9 @@ def evaluate_plus_minus(tokens):
                 answer += tokens[index]['number']
             elif tokens[index - 1]['type'] == 'MINUS':
                 answer -= tokens[index]['number']
-            else:
+            else:  # No need to check for 'DIVIDE', 'MULTIPLY'
+                #  since the the divide or multiple tokens are already
+                #  processed in evaluate_multiply_divide before entering here
                 print('Invalid syntax')
                 exit(1)
         index += 1
@@ -133,7 +135,9 @@ def evaluate_multiply_divide(tokens):
                 tokens.pop(index - 1)
                 index -= 2
                 end -= 2
-            elif tokens[index - 1]['type'] in('PLUS', 'MINUS'):
+            elif tokens[index - 1]['type'] in('PLUS', 'MINUS'):  # No need to check for 'OPEN_PAREN', 'CLOSE_PAREN'
+                #  since the the parentheses tokens are already
+                #  processed in evaluate_parentheses before entering here
                 index += 1
             else:
                 print('Invalid syntax')
@@ -158,6 +162,9 @@ def evaluate_parentheses(tokens):
                 while tokens[index_paren]['type'] != 'CLOSE_PAREN':
                     tmp_tokens.append(tokens[index_paren])
                     index_paren += 1
+                    if index_paren == end:  # If there are no 'CLOSE_PAREN'
+                        print('Invalid syntax')
+                        exit(1)
                 tmp_ans = evaluate_plus_minus(evaluate_multiply_divide(tmp_tokens))
                 tokens[index - 1]['number'] = tmp_ans
                 tokens[index - 1]['type'] = 'NUMBER'
